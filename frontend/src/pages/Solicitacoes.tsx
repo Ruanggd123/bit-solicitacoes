@@ -24,6 +24,8 @@ import {
   RefreshCw,
   Download
 } from 'lucide-react';
+import { formatarData } from '../utils/formatters';
+import { canUserManageSolicitacao } from '../utils/permissions';
 
 interface SolicitacoesProps {
   initialStatusFilter?: string;
@@ -169,19 +171,6 @@ export const Solicitacoes: React.FC<SolicitacoesProps> = ({
     }
   };
 
-  const formatarData = (dataStr?: string | null) => {
-    if (!dataStr) return '—';
-    try {
-      const d = new Date(dataStr.replace(' ', 'T'));
-      return new Intl.DateTimeFormat('pt-BR', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric'
-      }).format(d);
-    } catch {
-      return dataStr;
-    }
-  };
 
   const exportarParaCSV = () => {
     if (solicitacoes.length === 0) {
@@ -299,11 +288,7 @@ export const Solicitacoes: React.FC<SolicitacoesProps> = ({
                 <tbody className="divide-y divide-slate-100">
                   {solicitacoes.map((sol) => {
                     const isAberto = sol.status === 'Aberto';
-                    const canEditOrDelete =
-                      isAberto &&
-                      (user?.perfil === 'administrador' ||
-                        user?.perfil === 'gestor' ||
-                        sol.usuario_id === user?.id);
+                    const canEditOrDelete = canUserManageSolicitacao(user, sol);
 
                     return (
                       <tr
@@ -388,11 +373,7 @@ export const Solicitacoes: React.FC<SolicitacoesProps> = ({
             <div className="md:hidden divide-y divide-slate-100">
               {solicitacoes.map((sol) => {
                 const isAberto = sol.status === 'Aberto';
-                const canEditOrDelete =
-                  isAberto &&
-                  (user?.perfil === 'administrador' ||
-                    user?.perfil === 'gestor' ||
-                    sol.usuario_id === user?.id);
+                const canEditOrDelete = canUserManageSolicitacao(user, sol);
 
                 return (
                   <div key={sol.id} className="p-4 space-y-3">

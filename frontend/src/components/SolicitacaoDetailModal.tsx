@@ -16,6 +16,7 @@ import {
   Edit2,
   Trash2
 } from 'lucide-react';
+import { formatarDataHora } from '../utils/formatters';
 
 interface SolicitacaoDetailModalProps {
   solicitacaoId: number | null;
@@ -100,22 +101,6 @@ export const SolicitacaoDetailModal: React.FC<SolicitacaoDetailModalProps> = ({
     }
   };
 
-  const formatarData = (dataStr?: string | null) => {
-    if (!dataStr) return '—';
-    try {
-      const d = new Date(dataStr.replace(' ', 'T'));
-      return new Intl.DateTimeFormat('pt-BR', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      }).format(d);
-    } catch {
-      return dataStr;
-    }
-  };
-
   const isAberto = solicitacao?.status === 'Aberto';
 
   return (
@@ -174,14 +159,14 @@ export const SolicitacaoDetailModal: React.FC<SolicitacaoDetailModalProps> = ({
                   <Calendar className="w-4 h-4 text-slate-400 shrink-0" />
                   <div>
                     <span className="block text-slate-400">Data de Abertura</span>
-                    <span className="font-semibold text-slate-800">{formatarData(solicitacao.data_abertura)}</span>
+                    <span className="font-semibold text-slate-800">{formatarDataHora(solicitacao.data_abertura)}</span>
                   </div>
                 </div>
 
                 {solicitacao.data_conclusao && (
                   <div className="flex items-center gap-2 text-emerald-700 col-span-full bg-emerald-50/70 p-2 rounded-lg border border-emerald-100">
                     <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600" />
-                    <span>Concluído em: <strong>{formatarData(solicitacao.data_conclusao)}</strong></span>
+                    <span>Concluído em: <strong>{formatarDataHora(solicitacao.data_conclusao)}</strong></span>
                   </div>
                 )}
               </div>
@@ -310,7 +295,7 @@ export const SolicitacaoDetailModal: React.FC<SolicitacaoDetailModalProps> = ({
                               {item.responsavel_nome} ({item.responsavel_departamento})
                             </span>
                             <span className="text-slate-400 text-[11px]">
-                              {formatarData(item.data_registro)}
+                              {formatarDataHora(item.data_registro)}
                             </span>
                           </div>
 

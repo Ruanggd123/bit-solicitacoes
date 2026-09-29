@@ -57,6 +57,26 @@ export class SolicitacaoService {
     };
   }
 
+  private validarPermissaoModificacao(
+    solicitacao: Solicitacao,
+    usuarioLogado: AuthPayload,
+    acao: 'editar' | 'excluir'
+  ): void {
+    // Regra de Negócio Central: Apenas solicitações com status 'Aberto' podem ser editadas ou excluídas
+    if (solicitacao.status !== 'Aberto') {
+      const acaoTexto = acao === 'editar' ? 'alteradas' : 'excluídas';
+      throw new AppError(
+        `Não é permitido ${acao} uma solicitação com status "${solicitacao.status}". Apenas solicitações com status "Aberto" podem ser ${acaoTexto}.`,
+        422
+      );
+    }
+
+    // Regra de Autorização: O usuário deve ser o criador da demanda ou possuir perfil administrador/gestor
+    if (usuarioLogado.perfil === 'colaborador' && solicitacao.usuario_id !== usuarioLogado.id) {
+      throw new AppError(`Você não tem permissão para ${acao} uma solicitação de outro colaborador.`, 403);
+    }
+  }
+
   editar(id: number, input: SolicitacaoUpdateInput, usuarioLogado: AuthPayload): Solicitacao {
     const solicitacao = this.repository.findById(id);
 
@@ -64,18 +84,7 @@ export class SolicitacaoService {
       throw new AppError('Solicitação não encontrada.', 404);
     }
 
-    // Regra de Negócio: Apenas solicitações com status 'Aberto' podem ser editadas
-    if (solicitacao.status !== 'Aberto') {
-      throw new AppError(
-        `Não é permitido editar uma solicitação com status "${solicitacao.status}". Apenas solicitações com status "Aberto" podem ser alteradas.`,
-        422
-      );
-    }
-
-    // Regra de Autorização: O usuário deve ser o criador da solicitação ou administrador/gestor
-    if (usuarioLogado.perfil === 'colaborador' && solicitacao.usuario_id !== usuarioLogado.id) {
-      throw new AppError('Você não tem permissão para editar uma solicitação de outro colaborador.', 403);
-    }
+    this.validarPermissaoModificacao(solicitacao, usuarioLogado, 'editar');
 
     const atualizada = this.repository.update(id, input);
 
@@ -102,18 +111,7 @@ export class SolicitacaoService {
       throw new AppError('Solicitação não encontrada.', 404);
     }
 
-    // Regra de Negócio: Apenas solicitações com status 'Aberto' podem ser excluídas
-    if (solicitacao.status !== 'Aberto') {
-      throw new AppError(
-        `Não é permitido excluir uma solicitação com status "${solicitacao.status}". Apenas solicitações com status "Aberto" podem ser excluídas.`,
-        422
-      );
-    }
-
-    // Regra de Autorização: O usuário deve ser o criador da solicitação ou administrador/gestor
-    if (usuarioLogado.perfil === 'colaborador' && solicitacao.usuario_id !== usuarioLogado.id) {
-      throw new AppError('Você não tem permissão para excluir uma solicitação de outro colaborador.', 403);
-    }
+    this.validarPermissaoModificacao(solicitacao, usuarioLogado, 'excluir');
 
     return this.repository.delete(id);
   }

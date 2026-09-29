@@ -57,74 +57,37 @@ export class SolicitacaoRepository {
     return this.findById(id)!;
   }
 
-  findById(id: number): Solicitacao | undefined {
-    const stmt = this.database.prepare(`
-      SELECT 
-        s.id,
-        s.codigo,
-        s.titulo,
-        s.descricao,
-        s.categoria,
-        s.status,
-        s.usuario_id,
-        s.data_abertura,
-        s.data_atualizacao,
-        s.data_conclusao,
-        s.observacoes,
-        u.nome as solicitante_nome,
-        u.departamento as solicitante_departamento
-      FROM solicitacoes s
-      INNER JOIN usuarios u ON s.usuario_id = u.id
-      WHERE s.id = ?
-    `);
+  private static readonly SELECT_BASE = `
+    SELECT 
+      s.id,
+      s.codigo,
+      s.titulo,
+      s.descricao,
+      s.categoria,
+      s.status,
+      s.usuario_id,
+      s.data_abertura,
+      s.data_atualizacao,
+      s.data_conclusao,
+      s.observacoes,
+      u.nome as solicitante_nome,
+      u.departamento as solicitante_departamento
+    FROM solicitacoes s
+    INNER JOIN usuarios u ON s.usuario_id = u.id
+  `;
 
+  findById(id: number): Solicitacao | undefined {
+    const stmt = this.database.prepare(`${SolicitacaoRepository.SELECT_BASE} WHERE s.id = ?`);
     return stmt.get(id) as Solicitacao | undefined;
   }
 
   findByCodigo(codigo: string): Solicitacao | undefined {
-    const stmt = this.database.prepare(`
-      SELECT 
-        s.id,
-        s.codigo,
-        s.titulo,
-        s.descricao,
-        s.categoria,
-        s.status,
-        s.usuario_id,
-        s.data_abertura,
-        s.data_atualizacao,
-        s.data_conclusao,
-        s.observacoes,
-        u.nome as solicitante_nome,
-        u.departamento as solicitante_departamento
-      FROM solicitacoes s
-      INNER JOIN usuarios u ON s.usuario_id = u.id
-      WHERE s.codigo = ?
-    `);
-
+    const stmt = this.database.prepare(`${SolicitacaoRepository.SELECT_BASE} WHERE s.codigo = ?`);
     return stmt.get(codigo) as Solicitacao | undefined;
   }
 
   findAll(filtros: SolicitacaoFiltros = {}): Solicitacao[] {
-    let sql = `
-      SELECT 
-        s.id,
-        s.codigo,
-        s.titulo,
-        s.descricao,
-        s.categoria,
-        s.status,
-        s.usuario_id,
-        s.data_abertura,
-        s.data_atualizacao,
-        s.data_conclusao,
-        s.observacoes,
-        u.nome as solicitante_nome,
-        u.departamento as solicitante_departamento
-      FROM solicitacoes s
-      INNER JOIN usuarios u ON s.usuario_id = u.id
-      WHERE 1=1
-    `;
+    let sql = `${SolicitacaoRepository.SELECT_BASE} WHERE 1=1`;
 
     const params: any[] = [];
 
