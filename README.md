@@ -45,12 +45,16 @@ Em conformidade estrita com o edital do processo seletivo, os seguintes document
 
 ---
 
-## 🌟 Diferenciais Implementados (Critérios de Avaliação)
+## 🌟 Diferenciais Implementados (Critérios de Avaliação e Extras)
 
-- 🐳 **Docker e Docker Compose:** Orquestração completa de contêineres de backend e frontend com Nginx em um único comando.
+- 🐳 **Docker e Docker Compose:** Orquestração completa de contêineres de backend e frontend com Nginx em um único comando (`docker compose up --build`).
 - 🧪 **Testes Automatizados:** Suíte com 19 testes automatizados com Jest e Supertest cobrindo 100% dos fluxos e regras de negócio essenciais.
 - 🚀 **CI/CD Integrado:** Pipeline no GitHub Actions configurada para lint, checagem estática de tipos e testes contínuos em matriz de versões do Node.js.
 - 📱 **Design Responsivo:** Interface construída com Tailwind CSS totalmente adaptável a telas móveis (smartphones, tablets e desktops).
+- 📖 **Documentação Interativa Swagger / OpenAPI 3.0:** Interface interativa completa para teste dos endpoints da API em `http://localhost:3001/api/docs`.
+- 🛡️ **Segurança HTTP Reforçada:** Cabeçalhos defensivos via `Helmet` e proteção contra ataques de força bruta no login via `Express-Rate-Limit`.
+- 📊 **Exportação de Relatórios Gerenciais:** Botão no frontend para download instantâneo da listagem filtrada em formato CSV compatível nativamente com Microsoft Excel (UTF-8 BOM).
+- ⚡ **Execução Unificada com 1 Comando:** Script na raiz do projeto para rodar simultaneamente backend e frontend em um único terminal.
 
 ---
 
@@ -133,23 +137,35 @@ docker compose down
 
 ---
 
-### Opção 2: Execução Manual com Node.js
+### Opção 2: Execução Unificada em 1 Comando (Raiz do Projeto)
 
-Abra dois terminais (um para o backend e outro para o frontend):
+Na raiz da pasta `bit-solicitacoes/`, basta rodar:
+
+```bash
+npm run dev
+```
+
+> Esse comando inicializa o backend na porta `3001` e o frontend na porta `3000` simultaneamente no mesmo terminal com logs coloridos!
+
+---
+
+### Opção 3: Execução Manual com Dois Terminais
+
+Caso prefira rodar cada serviço separadamente:
 
 #### Terminal 1 — Backend:
 ```bash
 cd backend
 npm run dev
 ```
-> O servidor iniciará em `http://localhost:3001` e criará automaticamente a base SQLite e os dados de demonstração.
+> O servidor iniciará em `http://localhost:3001` (Swagger disponível em `http://localhost:3001/api/docs`).
 
 #### Terminal 2 — Frontend:
 ```bash
 cd frontend
 npm run dev
 ```
-> A aplicação React abrirá na porta `http://localhost:3000` (ou `http://localhost:5173`).
+> A aplicação React abrirá na porta `http://localhost:3000`.
 
 ---
 

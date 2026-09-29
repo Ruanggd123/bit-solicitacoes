@@ -1,0 +1,24 @@
+{
+  "name": "portal-solicitacoes-bit",
+  "version": "1.0.0",
+  "description": "Portal de Solicitações Internas - bit Soluções (Full Stack)",
+  "private": true,
+  "scripts": {
+    "setup": "npm --prefix backend install && npm --prefix frontend install",
+    "dev": "npx concurrently -k -n \"BACKEND,FRONTEND\" -c \"blue.bold,cyan.bold\" \"npm --prefix backend run dev\" \"npm --prefix frontend run dev\"",
+    "test": "npm --prefix backend test",
+    "build": "npm --prefix backend run build && npm --prefix frontend run build",
+    "docker:up": "docker compose up --build",
+    "docker:down": "docker compose down"
+  },
+  "keywords": [
+    "fullstack",
+    "react",
+    "nodejs",
+    "express",
+    "typescript",
+    "bit-solucoes"
+  ],
+  "author": "Desenvolvedor de Sistemas Júnior",
+  "license": "MIT"
+}

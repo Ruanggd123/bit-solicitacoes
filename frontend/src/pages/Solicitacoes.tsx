@@ -21,7 +21,8 @@ import {
   Trash2,
   Calendar,
   User as UserIcon,
-  RefreshCw
+  RefreshCw,
+  Download
 } from 'lucide-react';
 
 interface SolicitacoesProps {
@@ -182,6 +183,39 @@ export const Solicitacoes: React.FC<SolicitacoesProps> = ({
     }
   };
 
+  const exportarParaCSV = () => {
+    if (solicitacoes.length === 0) {
+      showToast('warning', 'Sem dados', 'Nenhuma solicitação para exportar com os filtros atuais.');
+      return;
+    }
+
+    const cabecalhos = ['Código', 'Título', 'Categoria', 'Solicitante', 'Departamento', 'Data de Abertura', 'Status', 'Data de Conclusão', 'Observações'];
+    
+    const linhas = solicitacoes.map(s => [
+      `"${s.codigo}"`,
+      `"${s.titulo.replace(/"/g, '""')}"`,
+      `"${s.categoria}"`,
+      `"${s.solicitante_nome || ''}"`,
+      `"${s.solicitante_departamento || ''}"`,
+      `"${formatarData(s.data_abertura)}"`,
+      `"${s.status}"`,
+      `"${formatarData(s.data_conclusao)}"`,
+      `"${(s.observacoes || '').replace(/"/g, '""')}"`
+    ]);
+
+    const csvContent = '\uFEFF' + [cabecalhos.join(';'), ...linhas.map(e => e.join(';'))].join('\r\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `relatorio_solicitacoes_bitsolucoes_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    showToast('success', 'Relatório Gerado!', 'O arquivo CSV foi baixado com sucesso.');
+  };
+
   return (
     <div className="space-y-6 animate-fadeIn">
       {/* Cabeçalho da Página */}
@@ -202,6 +236,14 @@ export const Solicitacoes: React.FC<SolicitacoesProps> = ({
             className="p-2.5 bg-white border border-slate-200 text-slate-600 hover:text-slate-900 rounded-xl hover:bg-slate-50 transition-colors shadow-sm"
           >
             <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+          </button>
+          <button
+            onClick={exportarParaCSV}
+            title="Exportar para planilha (CSV/Excel)"
+            className="px-3.5 py-2.5 bg-white border border-slate-200 text-slate-700 hover:text-blue-600 hover:border-blue-300 rounded-xl hover:bg-slate-50 transition-all shadow-sm flex items-center gap-1.5 text-xs font-semibold"
+          >
+            <Download className="w-4 h-4 text-blue-600" />
+            <span className="hidden sm:inline">Exportar Planilha</span>
           </button>
           <button
             onClick={handleOpenCreate}

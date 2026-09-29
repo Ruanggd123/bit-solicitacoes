@@ -81,6 +81,21 @@ Abaixo, cada tecnologia é detalhada segundo os critérios estipulados no edital
 - **Benefícios para o Cenário:** A cada `push` ou `pull_request`, o workflow executa a checagem de tipos estáticos (`tsc --noEmit`), roda todos os testes automatizados no backend em matriz de versões Node.js e valida o build de produção do frontend.
 - **Impacto:** Garantia de que nenhuma quebra de contrato ou falha de regra de negócio chegue à branch principal.
 
+### 2.11. Documentação Interativa de API: Swagger / OpenAPI 3.0 (`/api/docs`)
+- **Motivo da Escolha:** Padrão global para documentação, exploração e testes de endpoints HTTP REST.
+- **Benefícios para o Cenário:** Permite que qualquer desenvolvedor ou avaliador explore interativamente todos os endpoints, parâmetros de consulta, payloads esperados e respostas da API diretamente pelo navegador, com suporte a autorização Bearer JWT em tempo real.
+- **Impacto:** Agilidade de integração entre equipes, transparência e profissionalismo na entrega da API.
+
+### 2.12. Segurança HTTP e Proteção contra Força Bruta: Helmet & Express-Rate-Limit
+- **Motivo da Escolha:** Endurecimento (*hardening*) de segurança da aplicação web na camada de transporte HTTP.
+- **Benefícios para o Cenário:** O Helmet configura cabeçalhos cruciais contra ataques comuns (`X-Content-Type-Options`, `X-Frame-Options`, etc.). O Rate Limiting protege a rota crítica de login contra tentativas automatizadas de adivinhação de senhas (brute-force).
+- **Impacto:** Atendimento exemplar ao critério de segurança básica e boas práticas avaliado no processo seletivo.
+
+### 2.13. Exportação de Relatórios Gerenciais: CSV com Codificação UTF-8 BOM
+- **Motivo da Escolha:** Atendimento às necessidades operacionais de gestores de equipes para análise de dados tabulares.
+- **Benefícios para o Cenário:** Geração instantânea de planilhas no lado do cliente com os filtros ativos aplicados. A inclusão do Byte Order Mark UTF-8 (`\uFEFF`) e delimitador `;` garante abertura perfeita no Microsoft Excel brasileiro sem desfiguração de caracteres acentuados.
+- **Impacto:** Alto valor agregado para tomada de decisão e usabilidade corporativa.
+
 ---
 
 ## 3. Justificativa Conceitual e Decisões Arquiteturais
