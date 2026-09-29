@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: bit_solicitacoes_backend
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+      - JWT_SECRET=chave_secreta_jwt_producao_bit_solucoes_2026
+      - DATABASE_PATH=/app/data/solicitacoes.db
+      - CORS_ORIGIN=*
+    volumes:
+      - sqlite_data:/app/data
+    networks:
+      - bit_network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: bit_solicitacoes_frontend
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    networks:
+      - bit_network
+
+volumes:
+  sqlite_data:
+    driver: local
+
+networks:
+  bit_network:
+    driver: bridge
