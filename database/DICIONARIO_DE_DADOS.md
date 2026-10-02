@@ -7,6 +7,8 @@ Este documento detalha o modelo relacional de dados do sistema, especificando en
 
 ## 1. Diagrama Entidade-Relacionamento (DER)
 
+![Diagrama Entidade-Relacionamento](../docs/modelo_banco_dados.jpg)
+
 ```mermaid
 erDiagram
     USUARIOS ||--o{ SOLICITACOES : "registra (1:N)"
