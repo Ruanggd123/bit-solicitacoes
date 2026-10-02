@@ -8,4 +8,5 @@ module.exports = {
   },
   moduleFileExtensions: ['ts', 'js', 'json', 'node'],
   verbose: true,
+  maxWorkers: 1,
 };

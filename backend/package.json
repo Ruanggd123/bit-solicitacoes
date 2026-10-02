@@ -7,8 +7,8 @@
     "dev": "tsx watch src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",
-    "test": "jest --detectOpenHandles --forceExit",
-    "test:coverage": "jest --coverage --detectOpenHandles --forceExit",
+    "test": "jest --runInBand --detectOpenHandles --forceExit",
+    "test:coverage": "jest --coverage --runInBand --detectOpenHandles --forceExit",
     "seed": "tsx src/config/seedRunner.ts"
   },
   "dependencies": {
