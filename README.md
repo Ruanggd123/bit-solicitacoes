@@ -32,6 +32,9 @@ O **Portal de Solicitações Internas** é uma solução web corporativa Full St
 
 O sistema permite que colaboradores cadastrem solicitações para diferentes áreas da empresa (TI, RH, Compras, Financeiro e Infraestrutura), acompanhem o status da sua demanda em tempo real e visualizem métricas analíticas e linha do tempo de cada atendimento.
 
+### 📸 Evidência de Funcionamento da Aplicação
+![Portal de Solicitações Internas - Dashboard e Gerenciamento](./docs/evidencia_dashboard.jpg)
+
 ---
 
 ## 📑 Documentos Oficiais da Entrega
@@ -42,6 +45,7 @@ Em conformidade estrita com o edital do processo seletivo, os seguintes document
 - 🗄️ [**DICIONÁRIO DE DADOS**](./database/DICIONARIO_DE_DADOS.md): Especificação de todas as tabelas, tipos de dados, chaves primárias e estrangeiras, índices de performance e Diagrama Entidade-Relacionamento (DER).
 - 📜 [**SCRIPT DE CRIAÇÃO DO BANCO (DDL)**](./database/schema.sql): Script SQL para recriação integral da base de dados e índices.
 - 🌱 [**SCRIPT DE POPULAÇÃO INICIAL (SEEDS)**](./database/seeds.sql): Carga inicial de categorias, usuários com senhas criptografadas em Bcrypt e solicitações de exemplo.
+- 📸 [**EVIDÊNCIA DE FUNCIONAMENTO (PRINTS)**](./docs/evidencia_dashboard.jpg): Captura de tela da aplicação em pleno funcionamento com dados e indicadores.
 
 ---
 
