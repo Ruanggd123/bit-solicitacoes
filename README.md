@@ -2,7 +2,7 @@
 > **Processo Seletivo para Desenvolvedor(a) de Sistemas Júnior**  
 > Avaliação Técnica — Mini-Projeto Full Stack
 
-[![CI / CD Pipeline](https://github.com/ruangomes/bit-solicitacoes/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/ruangomes/bit-solicitacoes/actions/workflows/ci.yml)
+[![CI / CD Pipeline](https://github.com/Ruanggd123/bit-solicitacoes/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Ruanggd123/bit-solicitacoes/actions/workflows/ci.yml)
 [![Node.js Version](https://img.shields.io/badge/node->=%2020.0.0-brightgreen.svg)](https://nodejs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.8-blue.svg)](https://www.typescriptlang.org/)
 [![React](https://img.shields.io/badge/React-18-61dafb.svg)](https://react.dev/)
@@ -75,7 +75,7 @@ Para executar a aplicação na máquina local sem Docker, certifique-se de possu
 
 ### 1. Clonar o Repositório
 ```bash
-git clone https://github.com/ruangomes/bit-solicitacoes.git
+git clone https://github.com/Ruanggd123/bit-solicitacoes.git
 cd bit-solicitacoes
 ```
 
