@@ -14,7 +14,8 @@ import {
   Building,
   CheckCircle2,
   Edit2,
-  Trash2
+  Trash2,
+  Printer
 } from 'lucide-react';
 import { formatarDataHora } from '../utils/formatters';
 
@@ -99,6 +100,122 @@ export const SolicitacaoDetailModal: React.FC<SolicitacaoDetailModalProps> = ({
     } finally {
       setIsUpdatingStatus(false);
     }
+  };
+
+  const handlePrintProtocolo = () => {
+    if (!solicitacao) return;
+
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      showToast('warning', 'Pop-up bloqueado', 'Por favor, permita pop-ups para imprimir o comprovante.');
+      return;
+    }
+
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html lang="pt-BR">
+      <head>
+        <meta charset="UTF-8">
+        <title>Ordem de Serviço - ${solicitacao.codigo} - bit Soluções</title>
+        <style>
+          @page { size: A4; margin: 15mm; }
+          body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #0f172a; margin: 0; padding: 20px; line-height: 1.5; }
+          .header { border-bottom: 2px solid #2563eb; padding-bottom: 12px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+          .logo { font-size: 24px; font-weight: 900; color: #0f172a; }
+          .logo span { color: #2563eb; }
+          .protocolo-badge { font-family: monospace; font-size: 15px; font-weight: bold; background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; padding: 6px 14px; border-radius: 6px; }
+          .title { font-size: 18px; font-weight: bold; margin-bottom: 15px; color: #0f172a; }
+          .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 20px; }
+          .field { background: #f8fafc; border: 1px solid #e2e8f0; padding: 10px 14px; border-radius: 6px; }
+          .field-label { font-size: 11px; text-transform: uppercase; color: #64748b; font-weight: bold; margin-bottom: 3px; }
+          .field-value { font-size: 13px; font-weight: 600; color: #0f172a; }
+          .box { border: 1px solid #e2e8f0; border-radius: 6px; padding: 14px; margin-bottom: 20px; }
+          .box-title { font-size: 11px; font-weight: bold; text-transform: uppercase; color: #475569; margin-bottom: 8px; border-bottom: 1px solid #f1f5f9; padding-bottom: 4px; }
+          .box-content { font-size: 13px; white-space: pre-wrap; color: #334155; }
+          .timeline-item { border-left: 2px solid #2563eb; padding-left: 12px; margin-bottom: 10px; font-size: 12px; }
+          .signatures { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-top: 50px; text-align: center; }
+          .sign-line { border-top: 1px solid #94a3b8; padding-top: 6px; font-size: 12px; font-weight: 600; color: #475569; }
+          .footer { margin-top: 30px; font-size: 11px; color: #94a3b8; text-align: center; border-top: 1px solid #e2e8f0; padding-top: 10px; }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div>
+            <div class="logo">bit <span>Soluções</span></div>
+            <div style="font-size: 12px; color: #64748b; margin-top: 2px;">Portal de Solicitações Internas • Ordem de Serviço / Protocolo</div>
+          </div>
+          <div class="protocolo-badge">Protocolo: ${solicitacao.codigo}</div>
+        </div>
+
+        <div class="title">${solicitacao.titulo}</div>
+
+        <div class="grid">
+          <div class="field">
+            <div class="field-label">Solicitante</div>
+            <div class="field-value">${solicitacao.solicitante_nome}</div>
+          </div>
+          <div class="field">
+            <div class="field-label">Departamento</div>
+            <div class="field-value">${solicitacao.solicitante_departamento}</div>
+          </div>
+          <div class="field">
+            <div class="field-label">Categoria / Setor</div>
+            <div class="field-value">${solicitacao.categoria}</div>
+          </div>
+          <div class="field">
+            <div class="field-label">Status Atual</div>
+            <div class="field-value">${solicitacao.status}</div>
+          </div>
+          <div class="field">
+            <div class="field-label">Data de Abertura</div>
+            <div class="field-value">${formatarDataHora(solicitacao.data_abertura)}</div>
+          </div>
+          <div class="field">
+            <div class="field-label">Data de Conclusão</div>
+            <div class="field-value">${solicitacao.data_conclusao ? formatarDataHora(solicitacao.data_conclusao) : 'Em andamento'}</div>
+          </div>
+        </div>
+
+        <div class="box">
+          <div class="box-title">Descrição Detalhada da Demanda</div>
+          <div class="box-content">${solicitacao.descricao}</div>
+        </div>
+
+        ${historico.length > 0 ? `
+          <div class="box">
+            <div class="box-title">Linha do Tempo e Histórico de Despachos</div>
+            ${historico.map(h => `
+              <div class="timeline-item">
+                <strong>${h.responsavel_nome}</strong> (${h.responsavel_departamento}) alterou status para <strong>${h.novo_status}</strong> em ${formatarDataHora(h.data_registro)}
+                ${h.comentario ? `<div style="color: #64748b; margin-top: 2px; font-style: italic;">"${h.comentario}"</div>` : ''}
+              </div>
+            `).join('')}
+          </div>
+        ` : ''}
+
+        <div class="signatures">
+          <div>
+            <div class="sign-line">Assinatura do Solicitante<br><small style="font-weight: normal; color: #94a3b8;">${solicitacao.solicitante_nome}</small></div>
+          </div>
+          <div>
+            <div class="sign-line">Responsável pelo Atendimento<br><small style="font-weight: normal; color: #94a3b8;">Setor de ${solicitacao.categoria}</small></div>
+          </div>
+        </div>
+
+        <div class="footer">
+          Documento gerado eletronicamente pelo Portal de Solicitações Internas • bit Soluções em ${new Date().toLocaleString('pt-BR')}
+        </div>
+      </body>
+      </html>
+    `;
+
+    printWindow.document.open();
+    printWindow.document.write(htmlContent);
+    printWindow.document.close();
+    printWindow.focus();
+    setTimeout(() => {
+      printWindow.print();
+    }, 350);
   };
 
   const isAberto = solicitacao?.status === 'Aberto';
@@ -320,7 +437,18 @@ export const SolicitacaoDetailModal: React.FC<SolicitacaoDetailModalProps> = ({
         </div>
 
         {/* Rodapé do Modal */}
-        <div className="pt-3 border-t border-slate-100 flex justify-end">
+        <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
+          <button
+            type="button"
+            onClick={handlePrintProtocolo}
+            disabled={!solicitacao || isLoading}
+            className="px-3.5 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 hover:border-slate-300 rounded-xl transition-all shadow-sm flex items-center gap-1.5 disabled:opacity-50"
+            title="Gerar Ordem de Serviço / Protocolo oficial para impressão ou PDF"
+          >
+            <Printer className="w-3.5 h-3.5 text-blue-600" />
+            <span>Imprimir Protocolo / O.S.</span>
+          </button>
+
           <button
             onClick={onClose}
             className="px-4 py-2 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors"
