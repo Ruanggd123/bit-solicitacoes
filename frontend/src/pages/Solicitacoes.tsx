@@ -210,9 +210,14 @@ export const Solicitacoes: React.FC<SolicitacoesProps> = ({
       {/* Cabeçalho da Página */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">
-            Gerenciamento de Solicitações
-          </h1>
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">
+              Gerenciamento de Solicitações
+            </h1>
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-100">
+              {solicitacoes.length} {solicitacoes.length === 1 ? 'registro' : 'registros'}
+            </span>
+          </div>
           <p className="text-sm text-slate-500 mt-1">
             Consulte, acompanhe e gerencie as demandas internas de todos os setores.
           </p>
@@ -319,7 +324,7 @@ export const Solicitacoes: React.FC<SolicitacoesProps> = ({
                             {/* Ver detalhes / Alterar Status */}
                             <button
                               onClick={() => handleOpenDetails(sol.id)}
-                              className="p-1.5 rounded-lg text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                              className="p-1.5 rounded-lg text-blue-600 bg-blue-50/80 hover:bg-blue-100 transition-colors"
                               title="Ver detalhes / Alterar status"
                             >
                               <Eye className="w-4 h-4" />
@@ -331,8 +336,8 @@ export const Solicitacoes: React.FC<SolicitacoesProps> = ({
                               disabled={!canEditOrDelete}
                               className={`p-1.5 rounded-lg transition-colors ${
                                 canEditOrDelete
-                                  ? 'text-slate-500 hover:text-amber-600 hover:bg-amber-50'
-                                  : 'text-slate-300 cursor-not-allowed'
+                                  ? 'text-amber-600 bg-amber-50/80 hover:bg-amber-100'
+                                  : 'text-slate-300 bg-slate-50 cursor-not-allowed opacity-40'
                               }`}
                               title={
                                 !isAberto
@@ -349,8 +354,8 @@ export const Solicitacoes: React.FC<SolicitacoesProps> = ({
                               disabled={!canEditOrDelete}
                               className={`p-1.5 rounded-lg transition-colors ${
                                 canEditOrDelete
-                                  ? 'text-slate-500 hover:text-rose-600 hover:bg-rose-50'
-                                  : 'text-slate-300 cursor-not-allowed'
+                                  ? 'text-rose-600 bg-rose-50/80 hover:bg-rose-100'
+                                  : 'text-slate-300 bg-slate-50 cursor-not-allowed opacity-40'
                               }`}
                               title={
                                 !isAberto
@@ -431,6 +436,16 @@ export const Solicitacoes: React.FC<SolicitacoesProps> = ({
                   </div>
                 );
               })}
+            </div>
+
+            {/* Rodapé informativo da listagem */}
+            <div className="px-4 py-3 bg-slate-50/60 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-slate-500">
+              <span className="font-medium">
+                Mostrando <strong className="text-slate-800">{solicitacoes.length}</strong> {solicitacoes.length === 1 ? 'solicitação' : 'solicitações'}
+              </span>
+              <span className="text-[11px] text-slate-400">
+                * Conforme regra de negócio, solicitações "Em Atendimento" ou "Concluído" não permitem edição/exclusão.
+              </span>
             </div>
           </>
         )}

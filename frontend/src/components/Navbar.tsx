@@ -6,8 +6,6 @@ import {
   LogOut,
   Menu,
   X,
-  User as UserIcon,
-  ShieldCheck,
   Building2
 } from 'lucide-react';
 
@@ -39,7 +37,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   };
 
   return (
-    <header className="bg-white border-b border-slate-200/80 sticky top-0 z-40 shadow-sm">
+    <header className="bg-white/90 backdrop-blur-md border-b border-slate-200/80 sticky top-0 z-40 shadow-sm transition-all">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo e Marca */}
