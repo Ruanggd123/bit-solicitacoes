@@ -3,9 +3,10 @@ import {
   Solicitacao,
   SolicitacaoFiltros,
   SolicitacaoCreateInput,
-  StatusSolicitacao
+  StatusSolicitacao,
+  DashboardMetrics
 } from '../types';
-import { solicitacoesApi, categoriasApi } from '../services/api';
+import { solicitacoesApi, categoriasApi, dashboardApi } from '../services/api';
 import { useToast } from '../contexts/ToastContext';
 import { useAuth } from '../contexts/AuthContext';
 import { StatusBadge } from '../components/StatusBadge';
@@ -22,7 +23,11 @@ import {
   Calendar,
   User as UserIcon,
   RefreshCw,
-  Download
+  Download,
+  Play,
+  CheckCircle2,
+  Layers,
+  Clock
 } from 'lucide-react';
 import { formatarData } from '../utils/formatters';
 import { canUserManageSolicitacao } from '../utils/permissions';
@@ -43,7 +48,9 @@ export const Solicitacoes: React.FC<SolicitacoesProps> = ({
 
   const [solicitacoes, setSolicitacoes] = useState<Solicitacao[]>([]);
   const [categorias, setCategorias] = useState<Array<{ id: number; nome: string; descricao?: string }>>([]);
+  const [metricas, setMetricas] = useState<DashboardMetrics | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [updatingId, setUpdatingId] = useState<number | null>(null);
 
   // Estados dos filtros
   const [filtros, setFiltros] = useState<SolicitacaoFiltros>({
@@ -53,6 +60,16 @@ export const Solicitacoes: React.FC<SolicitacoesProps> = ({
     data_inicio: '',
     data_fim: ''
   });
+
+  // Sincronizar filtro quando a prop mudar (ex: ao navegar pelos cards do Dashboard)
+  useEffect(() => {
+    if (initialStatusFilter !== undefined) {
+      setFiltros((prev) => ({
+        ...prev,
+        status: (initialStatusFilter as StatusSolicitacao) || ''
+      }));
+    }
+  }, [initialStatusFilter]);
 
   // Estados dos Modais
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -75,6 +92,16 @@ export const Solicitacoes: React.FC<SolicitacoesProps> = ({
     }
   };
 
+  // Carregar Métricas dos indicadores
+  const carregarMetricas = useCallback(async () => {
+    try {
+      const data = await dashboardApi.obterMetricas();
+      setMetricas(data);
+    } catch (error) {
+      console.error('Erro ao buscar métricas:', error);
+    }
+  }, []);
+
   // Carregar Solicitações com Filtros
   const carregarSolicitacoes = useCallback(async () => {
     setIsLoading(true);
@@ -90,7 +117,8 @@ export const Solicitacoes: React.FC<SolicitacoesProps> = ({
 
   useEffect(() => {
     carregarCategorias();
-  }, []);
+    carregarMetricas();
+  }, [carregarMetricas]);
 
   useEffect(() => {
     carregarSolicitacoes();
@@ -115,6 +143,10 @@ export const Solicitacoes: React.FC<SolicitacoesProps> = ({
     });
   };
 
+  const handleRefresh = async () => {
+    await Promise.all([carregarSolicitacoes(), carregarMetricas()]);
+  };
+
   const handleOpenCreate = () => {
     setSolicitacaoParaEditar(null);
     setIsModalOpen(true);
@@ -134,6 +166,22 @@ export const Solicitacoes: React.FC<SolicitacoesProps> = ({
     setIsDetalhesOpen(true);
   };
 
+  // Ação rápida de 1 clique para avançar status
+  const handleQuickStatusAdvance = async (sol: Solicitacao, novoStatus: StatusSolicitacao, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setUpdatingId(sol.id);
+    try {
+      await solicitacoesApi.alterarStatus(sol.id, novoStatus, `Avanço rápido de status para "${novoStatus}".`);
+      showToast('success', 'Status Atualizado!', `A solicitação ${sol.codigo} agora está "${novoStatus}".`);
+      await Promise.all([carregarSolicitacoes(), carregarMetricas()]);
+    } catch (error: any) {
+      const msg = error.response?.data?.mensagem || 'Falha ao atualizar o status da solicitação.';
+      showToast('error', 'Erro na atualização', msg);
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
   const handleSubmitModal = async (dados: SolicitacaoCreateInput) => {
     setIsSaving(true);
     try {
@@ -145,7 +193,7 @@ export const Solicitacoes: React.FC<SolicitacoesProps> = ({
         showToast('success', 'Solicitação Registrada!', 'Sua demanda foi cadastrada com status inicial Aberto.');
       }
       setIsModalOpen(false);
-      carregarSolicitacoes();
+      await Promise.all([carregarSolicitacoes(), carregarMetricas()]);
     } catch (error: any) {
       const msg = error.response?.data?.mensagem || 'Erro ao processar a solicitação.';
       showToast('error', 'Erro', msg);
@@ -162,7 +210,7 @@ export const Solicitacoes: React.FC<SolicitacoesProps> = ({
       await solicitacoesApi.excluir(solicitacaoParaExcluir.id);
       showToast('success', 'Excluída!', `A solicitação ${solicitacaoParaExcluir.codigo} foi removida.`);
       setSolicitacaoParaExcluir(null);
-      carregarSolicitacoes();
+      await Promise.all([carregarSolicitacoes(), carregarMetricas()]);
     } catch (error: any) {
       const msg = error.response?.data?.mensagem || 'Falha ao excluir a solicitação.';
       showToast('error', 'Erro na exclusão', msg);
@@ -171,7 +219,6 @@ export const Solicitacoes: React.FC<SolicitacoesProps> = ({
     }
   };
 
-
   const exportarParaCSV = () => {
     if (solicitacoes.length === 0) {
       showToast('warning', 'Sem dados', 'Nenhuma solicitação para exportar com os filtros atuais.');
@@ -179,8 +226,8 @@ export const Solicitacoes: React.FC<SolicitacoesProps> = ({
     }
 
     const cabecalhos = ['Código', 'Título', 'Categoria', 'Solicitante', 'Departamento', 'Data de Abertura', 'Status', 'Data de Conclusão', 'Observações'];
-    
-    const linhas = solicitacoes.map(s => [
+
+    const linhas = solicitacoes.map((s) => [
       `"${s.codigo}"`,
       `"${s.titulo.replace(/"/g, '""')}"`,
       `"${s.categoria}"`,
@@ -192,7 +239,7 @@ export const Solicitacoes: React.FC<SolicitacoesProps> = ({
       `"${(s.observacoes || '').replace(/"/g, '""')}"`
     ]);
 
-    const csvContent = '\uFEFF' + [cabecalhos.join(';'), ...linhas.map(e => e.join(';'))].join('\r\n');
+    const csvContent = '\uFEFF' + [cabecalhos.join(';'), ...linhas.map((e) => e.join(';'))].join('\r\n');
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -205,8 +252,15 @@ export const Solicitacoes: React.FC<SolicitacoesProps> = ({
     showToast('success', 'Relatório Gerado!', 'O arquivo CSV foi baixado com sucesso.');
   };
 
+  const statusTabs = [
+    { label: 'Todas', value: '', count: metricas?.total ?? solicitacoes.length, icon: Layers },
+    { label: 'Abertas', value: 'Aberto', count: metricas?.abertas ?? 0, icon: Clock },
+    { label: 'Em Atendimento', value: 'Em Atendimento', count: metricas?.em_atendimento ?? 0, icon: Play },
+    { label: 'Concluídas', value: 'Concluído', count: metricas?.concluidas ?? 0, icon: CheckCircle2 }
+  ];
+
   return (
-    <div className="space-y-6 animate-fadeIn">
+    <div className="space-y-5 animate-fadeIn">
       {/* Cabeçalho da Página */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -219,34 +273,64 @@ export const Solicitacoes: React.FC<SolicitacoesProps> = ({
             </span>
           </div>
           <p className="text-sm text-slate-500 mt-1">
-            Consulte, acompanhe e gerencie as demandas internas de todos os setores.
+            Consulte, acompanhe e gerencie as demandas internas com ações ágeis e filtros em tempo real.
           </p>
         </div>
 
         <div className="flex items-center gap-2">
           <button
-            onClick={carregarSolicitacoes}
-            title="Atualizar lista"
-            className="p-2.5 bg-white border border-slate-200 text-slate-600 hover:text-slate-900 rounded-xl hover:bg-slate-50 transition-colors shadow-sm"
+            onClick={handleRefresh}
+            title="Atualizar lista e indicadores"
+            className="p-2.5 bg-white border border-slate-200 text-slate-600 hover:text-slate-900 rounded-xl hover:bg-slate-50 transition-colors shadow-xs cursor-pointer"
           >
             <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
           </button>
           <button
             onClick={exportarParaCSV}
             title="Exportar para planilha (CSV/Excel)"
-            className="px-3.5 py-2.5 bg-white border border-slate-200 text-slate-700 hover:text-blue-600 hover:border-blue-300 rounded-xl hover:bg-slate-50 transition-all shadow-sm flex items-center gap-1.5 text-xs font-semibold"
+            className="px-3.5 py-2.5 bg-white border border-slate-200 text-slate-700 hover:text-blue-600 hover:border-blue-300 rounded-xl hover:bg-slate-50 transition-all shadow-xs flex items-center gap-1.5 text-xs font-semibold cursor-pointer"
           >
             <Download className="w-4 h-4 text-blue-600" />
             <span className="hidden sm:inline">Exportar Planilha</span>
           </button>
           <button
             onClick={handleOpenCreate}
-            className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-xl shadow-sm hover:shadow transition-all flex items-center gap-2"
+            className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-xl shadow-xs hover:shadow transition-all flex items-center gap-2 cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             Nova Solicitação
           </button>
         </div>
+      </div>
+
+      {/* Abas Rápidas por Status com Contadores ao Vivo */}
+      <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-thin">
+        {statusTabs.map((tab) => {
+          const isActive = (filtros.status || '') === tab.value;
+          return (
+            <button
+              key={tab.value}
+              onClick={() => setFiltros((prev) => ({ ...prev, status: tab.value as StatusSolicitacao | '' }))}
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all shadow-xs cursor-pointer ${
+                isActive
+                  ? 'bg-blue-600 text-white shadow-blue-500/20 shadow-md ring-2 ring-blue-600/30'
+                  : 'bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-50 border border-slate-200/80'
+              }`}
+            >
+              <tab.icon className={`w-3.5 h-3.5 ${isActive ? 'text-white' : 'text-slate-400'}`} />
+              <span>{tab.label}</span>
+              <span
+                className={`px-1.5 py-0.5 rounded-full text-[11px] font-bold ${
+                  isActive
+                    ? 'bg-white/20 text-white'
+                    : 'bg-slate-100 text-slate-600'
+                }`}
+              >
+                {tab.count}
+              </span>
+            </button>
+          );
+        })}
       </div>
 
       {/* Componente de Filtros (Período, Categoria, Status e Texto Livre) */}
@@ -258,7 +342,7 @@ export const Solicitacoes: React.FC<SolicitacoesProps> = ({
       />
 
       {/* Tabela Desktop / Cards Mobile */}
-      <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
         {isLoading ? (
           <div className="py-20 flex flex-col items-center justify-center text-slate-400 gap-3">
             <div className="w-8 h-8 border-3 border-blue-600 border-t-transparent rounded-full animate-spin" />
@@ -287,18 +371,21 @@ export const Solicitacoes: React.FC<SolicitacoesProps> = ({
                     <th className="py-3.5 px-4">Solicitante</th>
                     <th className="py-3.5 px-4">Data Abertura</th>
                     <th className="py-3.5 px-4">Status</th>
-                    <th className="py-3.5 px-4 text-right">Ações</th>
+                    <th className="py-3.5 px-4 text-right">Ações Rápidas</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {solicitacoes.map((sol) => {
                     const isAberto = sol.status === 'Aberto';
                     const canEditOrDelete = canUserManageSolicitacao(user, sol);
+                    const isRowBusy = updatingId === sol.id;
 
                     return (
                       <tr
                         key={sol.id}
-                        className="hover:bg-slate-50/80 transition-colors group"
+                        onClick={() => handleOpenDetails(sol.id)}
+                        className="hover:bg-blue-50/40 transition-colors cursor-pointer group"
+                        title="Clique para visualizar detalhes completos"
                       >
                         <td className="py-3.5 px-4 font-mono font-bold text-slate-700">
                           {sol.codigo}
@@ -319,24 +406,59 @@ export const Solicitacoes: React.FC<SolicitacoesProps> = ({
                         <td className="py-3.5 px-4 whitespace-nowrap">
                           <StatusBadge status={sol.status} size="sm" />
                         </td>
-                        <td className="py-3.5 px-4 text-right whitespace-nowrap">
+                        <td
+                          className="py-3.5 px-4 text-right whitespace-nowrap"
+                          onClick={(e) => e.stopPropagation()}
+                        >
                           <div className="flex items-center justify-end gap-1.5">
-                            {/* Ver detalhes / Alterar Status */}
+                            {/* Ação Rápida de 1 Clique: Iniciar Atendimento */}
+                            {sol.status === 'Aberto' && (
+                              <button
+                                onClick={(e) => handleQuickStatusAdvance(sol, 'Em Atendimento', e)}
+                                disabled={isRowBusy}
+                                className="px-2.5 py-1 rounded-lg text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200/80 text-xs font-semibold flex items-center gap-1 transition-all shadow-2xs cursor-pointer disabled:opacity-50"
+                                title="Iniciar atendimento imediatamente"
+                              >
+                                <Play className="w-3 h-3 fill-emerald-600 text-emerald-600" />
+                                <span>Atender</span>
+                              </button>
+                            )}
+
+                            {/* Ação Rápida de 1 Clique: Concluir */}
+                            {sol.status === 'Em Atendimento' && (
+                              <button
+                                onClick={(e) => handleQuickStatusAdvance(sol, 'Concluído', e)}
+                                disabled={isRowBusy}
+                                className="px-2.5 py-1 rounded-lg text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200/80 text-xs font-semibold flex items-center gap-1 transition-all shadow-2xs cursor-pointer disabled:opacity-50"
+                                title="Concluir solicitação imediatamente"
+                              >
+                                <CheckCircle2 className="w-3.5 h-3.5 text-blue-600" />
+                                <span>Concluir</span>
+                              </button>
+                            )}
+
+                            {/* Ver detalhes */}
                             <button
-                              onClick={() => handleOpenDetails(sol.id)}
-                              className="p-1.5 rounded-lg text-blue-600 bg-blue-50/80 hover:bg-blue-100 transition-colors"
-                              title="Ver detalhes / Alterar status"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleOpenDetails(sol.id);
+                              }}
+                              className="p-1.5 rounded-lg text-slate-500 bg-slate-100 hover:bg-slate-200 hover:text-slate-800 transition-colors cursor-pointer"
+                              title="Ver detalhes completos e histórico"
                             >
                               <Eye className="w-4 h-4" />
                             </button>
 
                             {/* Editar (apenas status 'Aberto') */}
                             <button
-                              onClick={() => handleOpenEdit(sol)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleOpenEdit(sol);
+                              }}
                               disabled={!canEditOrDelete}
                               className={`p-1.5 rounded-lg transition-colors ${
                                 canEditOrDelete
-                                  ? 'text-amber-600 bg-amber-50/80 hover:bg-amber-100'
+                                  ? 'text-amber-600 bg-amber-50 hover:bg-amber-100 cursor-pointer'
                                   : 'text-slate-300 bg-slate-50 cursor-not-allowed opacity-40'
                               }`}
                               title={
@@ -350,11 +472,14 @@ export const Solicitacoes: React.FC<SolicitacoesProps> = ({
 
                             {/* Excluir (apenas status 'Aberto') */}
                             <button
-                              onClick={() => setSolicitacaoParaExcluir(sol)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSolicitacaoParaExcluir(sol);
+                              }}
                               disabled={!canEditOrDelete}
                               className={`p-1.5 rounded-lg transition-colors ${
                                 canEditOrDelete
-                                  ? 'text-rose-600 bg-rose-50/80 hover:bg-rose-100'
+                                  ? 'text-rose-600 bg-rose-50 hover:bg-rose-100 cursor-pointer'
                                   : 'text-slate-300 bg-slate-50 cursor-not-allowed opacity-40'
                               }`}
                               title={
@@ -379,9 +504,14 @@ export const Solicitacoes: React.FC<SolicitacoesProps> = ({
               {solicitacoes.map((sol) => {
                 const isAberto = sol.status === 'Aberto';
                 const canEditOrDelete = canUserManageSolicitacao(user, sol);
+                const isRowBusy = updatingId === sol.id;
 
                 return (
-                  <div key={sol.id} className="p-4 space-y-3">
+                  <div
+                    key={sol.id}
+                    onClick={() => handleOpenDetails(sol.id)}
+                    className="p-4 space-y-3 cursor-pointer hover:bg-slate-50/60 transition-colors"
+                  >
                     <div className="flex items-center justify-between">
                       <span className="font-mono text-xs font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded">
                         {sol.codigo}
@@ -402,23 +532,48 @@ export const Solicitacoes: React.FC<SolicitacoesProps> = ({
                       </div>
                     </div>
 
-                    <div className="flex items-center justify-between pt-2">
+                    <div
+                      className="flex items-center justify-between pt-2"
+                      onClick={(e) => e.stopPropagation()}
+                    >
                       <div className="flex items-center gap-1.5 text-xs text-slate-600">
                         <UserIcon className="w-3.5 h-3.5 text-slate-400" />
                         <span>{sol.solicitante_nome}</span>
                       </div>
 
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1.5">
+                        {/* Ação Rápida Mobile */}
+                        {sol.status === 'Aberto' && (
+                          <button
+                            onClick={(e) => handleQuickStatusAdvance(sol, 'Em Atendimento', e)}
+                            disabled={isRowBusy}
+                            className="px-2 py-1 text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg flex items-center gap-1"
+                          >
+                            <Play className="w-3 h-3 fill-emerald-600" />
+                            Atender
+                          </button>
+                        )}
+                        {sol.status === 'Em Atendimento' && (
+                          <button
+                            onClick={(e) => handleQuickStatusAdvance(sol, 'Concluído', e)}
+                            disabled={isRowBusy}
+                            className="px-2 py-1 text-xs font-semibold text-blue-700 bg-blue-50 border border-blue-200 rounded-lg flex items-center gap-1"
+                          >
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                            Concluir
+                          </button>
+                        )}
+
                         <button
                           onClick={() => handleOpenDetails(sol.id)}
-                          className="px-2.5 py-1 text-xs font-semibold text-blue-600 bg-blue-50 rounded-lg"
+                          className="px-2.5 py-1 text-xs font-semibold text-slate-600 bg-slate-100 rounded-lg"
                         >
                           Detalhes
                         </button>
                         {canEditOrDelete && (
                           <button
                             onClick={() => handleOpenEdit(sol)}
-                            className="px-2.5 py-1 text-xs font-semibold text-amber-600 bg-amber-50 rounded-lg"
+                            className="px-2 py-1 text-xs font-semibold text-amber-600 bg-amber-50 rounded-lg"
                           >
                             Editar
                           </button>
@@ -426,7 +581,7 @@ export const Solicitacoes: React.FC<SolicitacoesProps> = ({
                         {canEditOrDelete && (
                           <button
                             onClick={() => setSolicitacaoParaExcluir(sol)}
-                            className="px-2.5 py-1 text-xs font-semibold text-rose-600 bg-rose-50 rounded-lg"
+                            className="px-2 py-1 text-xs font-semibold text-rose-600 bg-rose-50 rounded-lg"
                           >
                             Excluir
                           </button>
@@ -466,7 +621,7 @@ export const Solicitacoes: React.FC<SolicitacoesProps> = ({
         solicitacaoId={detalhesId}
         isOpen={isDetalhesOpen}
         onClose={() => setIsDetalhesOpen(false)}
-        onStatusChanged={carregarSolicitacoes}
+        onStatusChanged={handleRefresh}
         onEditRequested={(sol) => handleOpenEdit(sol)}
         onDeleteRequested={(sol) => setSolicitacaoParaExcluir(sol)}
       />
